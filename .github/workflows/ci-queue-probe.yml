@@ -1,0 +1,38 @@
+# Sonda de la alerta de cola de CI (INFRA-550, P4 de INFRA-400). SOLO para qa.
+#
+# El job pide un runner con un label que NINGÚN pool de ARC atiende
+# (`ci-queue-probe-sin-pool`: no es un `runnerScaleSetName` de
+# k8s-gitops-pocharlies infra/arc.yaml ni una granja de GitHub), así que se
+# queda en cola para siempre y nunca llega a un listener. Es exactamente el caso
+# que mide el exporter `ci-queue-exporter` (API de GitHub): la alerta
+# CIQueueLabelWithoutPool debe saltar a los ~10 min, un incidente `CIQ-…` debe
+# abrirse en Keep con su aviso en el topic Infra (1248), y resolverse al
+# cancelar el run.
+#
+# Uso (qa, prueba de disparo, criterio 2 del spec):
+#   gh workflow run ci-queue-probe.yml -R pocharlies-org/sc-pilot-sandbox
+#   ... ver incidente + mensaje en 1248 a <= 25 min ...
+#   gh run cancel <run-id> -R pocharlies-org/sc-pilot-sandbox   # SIEMPRE al terminar
+#
+# El exporter solo mira repos con push en los últimos 7 días: el merge de este
+# fichero deja el sandbox activo. Sin `pull_request`/`push` a propósito: solo se
+# dispara a mano, nunca por accidente.
+name: ci-queue-probe
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+# Un re-dispatch cancela la sonda anterior: nunca quedan runs atascados en cola.
+concurrency:
+  group: ci-queue-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ci-queue-probe-sin-pool
+    steps:
+      # Si este paso llega a ejecutarse, algún runner atiende el label y la sonda
+      # ya no prueba nada.
+      - run: echo "algun runner atiende ci-queue-probe-sin-pool"

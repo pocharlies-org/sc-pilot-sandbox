@@ -5,9 +5,9 @@
 # k8s-gitops-pocharlies infra/arc.yaml ni una granja de GitHub), así que se
 # queda en cola para siempre y nunca llega a un listener. Es exactamente el caso
 # que mide el exporter `ci-queue-exporter` (API de GitHub): la alerta
-# CIQueueLabelWithoutPool debe saltar a los ~10 min, el incidente `CIQ-…` «Cola
-# de CI atascada» debe abrirse en Keep con su aviso en el topic Infra (1248), y
-# resolverse al cancelar el run.
+# CIQueueLabelWithoutPool debe saltar a los ~10 min, un incidente `CIQ-…` debe
+# abrirse en Keep con su aviso en el topic Infra (1248), y resolverse al
+# cancelar el run.
 #
 # Uso (qa, prueba de disparo, criterio 2 del spec):
 #   gh workflow run ci-queue-probe.yml -R pocharlies-org/sc-pilot-sandbox
@@ -23,6 +23,11 @@ on:
   workflow_dispatch:
 
 permissions: {}
+
+# Un re-dispatch cancela la sonda anterior: nunca quedan runs atascados en cola.
+concurrency:
+  group: ci-queue-probe
+  cancel-in-progress: true
 
 jobs:
   probe:

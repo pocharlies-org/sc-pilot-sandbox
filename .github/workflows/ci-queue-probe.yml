@@ -28,4 +28,6 @@ jobs:
   probe:
     runs-on: ci-queue-probe-sin-pool
     steps:
-      - run: echo "si ves esto, algún runner atiende ci-queue-probe-sin-pool: la sonda ya no prueba nada"
+      # Si este paso llega a ejecutarse, algún runner atiende el label y la sonda
+      # ya no prueba nada.
+      - run: echo "algun runner atiende ci-queue-probe-sin-pool"

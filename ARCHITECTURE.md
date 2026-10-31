@@ -47,7 +47,7 @@ Sin despliegue. Merge a `main` por PR; el guardia de merge exige el check `dupli
 
 - `ci-queue-probe-sin-pool` no debe llegar a ser nunca un `runnerScaleSetName` ni un label de runner real: si lo es, la sonda
   deja de probar nada (su único paso hace `echo` para que se note).
-- El exporter solo mira repos con push en los últimos 7 días: un commit al repo lo mantiene visible.
+- El exporter mira todos los repos no archivados de la org en cada ciclo (sin ventana de push: un run puede nacer por schedule, workflow_dispatch o re-run); la caché ETag/304 hace la consulta barata.
 - Solo ve runs en cola SIN ningún job arrancado: la sonda es de un solo job a propósito.
 - Un run de sonda olvidado deja un incidente abierto en Keep: cancelarlo siempre.
 

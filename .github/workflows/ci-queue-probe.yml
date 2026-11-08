@@ -13,6 +13,7 @@
 #   gh workflow run ci-queue-probe.yml -R pocharlies-org/sc-pilot-sandbox
 #   ... ver incidente + mensaje en 1248 a <= 25 min ...
 #   gh run cancel <run-id> -R pocharlies-org/sc-pilot-sandbox   # SIEMPRE al terminar
+# Variante autoalojada (INFRA-1056): `-f autoalojado=true`; salta a ~30 min.
 #
 # El exporter solo mira repos con push en los últimos 7 días: el merge de este
 # fichero deja el sandbox activo. Sin `pull_request`/`push` a propósito: solo se
@@ -21,6 +22,11 @@ name: ci-queue-probe
 
 on:
   workflow_dispatch:
+    inputs:
+      autoalojado:
+        description: "Sonda de pool autoalojado (CIQueueSelfHostedJobQueuedTooLong, ~30 min) en vez de label sin pool"
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -31,8 +37,11 @@ concurrency:
 
 jobs:
   probe:
-    runs-on: ci-queue-probe-sin-pool
+    # INFRA-1056: con `autoalojado` el job pide un runner autoalojado que nadie atiende
+    # (`self-hosted` + `ci-queue-probe-self-hosted`): el exporter lo publica como
+    # pool="self-hosted" y debe saltar CIQueueSelfHostedJobQueuedTooLong a los ~30 min.
+    runs-on: ${{ inputs.autoalojado && fromJSON('["self-hosted","Linux","X64","ci-queue-probe-self-hosted"]') || 'ci-queue-probe-sin-pool' }}
     steps:
       # Si este paso llega a ejecutarse, algún runner atiende el label y la sonda
       # ya no prueba nada.
-      - run: echo "algun runner atiende ci-queue-probe-sin-pool"
+      - run: echo "algun runner atiende el label de la sonda"
